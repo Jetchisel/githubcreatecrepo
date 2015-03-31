@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+# ============================================================================================ #
+#: Title           : githubcreaterepo                                                          #
+#: Sypnosis        : githubcreaterepo  REPONAME                                                #
+#: Date Created    : Tue Jan 27 14:24:53 PHT 2015 / Tue Jan 27 06:24:53 UTC 2015               #
+#: Last Edit       : Tue Mar 17 03:09:51 PHT 2015 / Mon Mar 16 19:09:51 UTC 2015               #
+#: License         : GPLv3                                                                     #
+#: Version         : 1.0.3                                                                     #
+#: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
+#: Description     : Create github repo using existing local git repo.                         #
+#: Options         : None                                                                      #
+#: Home Page       : None                                                                      #
+#: ExtComm         : curl,git                                                                  #
+# ============================================================================================ #
+
+# ******************************************************************************************** #
+#                                                                                              #
+#   Warn and die functions, for exit messages and default status or an optional exit status.   #
+#                                                                                              #
+# ******************************************************************************************** #
+
+warn() {
+   printf '%s\n' "${BASH_SOURCE##*/}: $*" >&2
+}
+
+die() {
+  local st=$?
+  case $2 in
+    *[^0-9]*|'') :;;
+    *) st=$2;;
+  esac
+  warn "$1"
+  exit "$st"
+}
+
+# ******************************************************************************************** #
+#                                                                                              #
+#          Only one argument is accepted no more no less, exit with an error otherwise.        #
+#                                                                                              #
+# ******************************************************************************************** #
+
+(( $# )) || die 'Missing a repository name as an argument!'
+(( $# > 1 )) && die 'Too many arguments!' 1
+
+# ******************************************************************************************** #
+#                                                                                              #
+#          Check for the required app/executable is with in your PATH, exit otherwise.         #
+#                                                                                              #
+# ******************************************************************************************** #
+
+Missing=()
+ExtComm=(curl git)
+MissingMessage="is either not installed or it is not in your PATH!"
+ExitMessage="Please install the following: "
+
+for apps in "${ExtComm[@]}"; do
+  if ! type -P "$apps" >/dev/null; then
+    printf '%s %s\n' "$apps" "$MissingMessage" >&2
+    Missing+=("$apps")
+  fi
+done
+
+(( ${#Missing[@]} )) && die "$ExitMessage[${Missing[*]}] exiting now!" 127
+
+# ******************************************************************************************** #
+#                                                                                              #
+# Create and push local repo to Github. NOTE: REPLACE THE X'S WITH YOUR OWN TOKEN (40 STRINGS.)#
+#                                                                                              #
+# ******************************************************************************************** #
+
+repo_name=$1
+Url=https://api.github.com/user/repos
+
+opt=(
+ 'Authorization: token XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' -d'{"name":"'$repo_name'"}'
+)
+
+curl -Lfi -H "${opt[@]}" "$Url"
+git remote add origin "https://github.com/$LOGNAME/$repo_name.git"
+git push --set-upstream origin master
+git push --tags
+
+# ******************************************************************************************** #
+#                                                                                              #
+#                                    Set the exit staus.                                       #
+#                                                                                              #
+# ******************************************************************************************** #
+
+exit 0
+
+# ============================================================================================ #
+#                                                                                              #
+#                                   >>> END OF SCRIPT <<<                                      #
+#                                                                                              #
+# ============================================================================================ #
