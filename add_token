@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# ============================================================================================ #
+#: Title           : add_token                                                                 #
+#: Sypnosis        : add_token                                                                 #
+#: Date Created    : Sun 21 Jun 2020 09:38:01 AM PST  /  Sun Jun 21 01:38:01 UTC 2020          #
+#: Last Edit       : Sun 21 Jun 2020 12:04:29 PM PST  /  Sun Jun 21 04:04:29 UTC 2020          #
+#: License         : GPLv3                                                                     #
+#: Version         : 1.0.0                                                                     #
+#: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
+#: Description     : An interactive script to add the Github token to githubcreaterepo script. #
+#: Options         : None                                                                      #
+#: Home Page       : None                                                                      #
+#: ExtComm         : ed                                                                        #
+# ============================================================================================ #
+
+# ******************************************************************************************** #
+#                       Check for ed if it is installed, exit otherwise!                       #
+# ******************************************************************************************** #
+
+if ! type -P ed >/dev/null; then
+  printf >&2 'ed is either not installed or it is not in your PATH!\n'
+  exit 127
+fi
+
+# ******************************************************************************************** #
+#                                      Accept user input.                                      #
+# ******************************************************************************************** #
+
+read -rp 'Enter token: ' token
+read -rp 'Enter script: ' script
+
+# ******************************************************************************************** #
+#                                 Process/sanitize user input.                                 #
+# ******************************************************************************************** #
+
+if [[ ${script::2} == '~/' ]]; then
+  script=$HOME/${script:2}
+fi
+
+if [[ ! -e $script ]]; then
+  printf >&2 '%s does not exists, please try again!\n' "$script"
+  exit 1
+else
+  printf '\nCreating backup of %s to %s\n' "$script" "$script.orig"
+  cp -v "$script" "$script.orig" || exit
+fi
+
+# ******************************************************************************************** #
+#                               Add Github token to the script.                                #
+# ******************************************************************************************** #
+
+printf '\nTrying to add Github token to %s\n\n' "$script"
+printf '%s\n' H "/Authorization/p" "/Authorization/s/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/$token/p" w | ed -s "$script"
+
+printf '\nIf you saw your token from the above output then that means all is ok!\n'
+
+# ============================================================================================ #
+#                                    >>> END OF SCRIPT <<<                                     #
+# ============================================================================================ #
